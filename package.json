@@ -1,0 +1,32 @@
+{
+  "name": "pdf-editor",
+  "version": "1.0.0",
+  "description": "브라우저에서 동작하는 편집 가능한 PDF 뷰어",
+  "scripts": {
+    "predev": "node scripts/copy-pdfjs-assets.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/copy-pdfjs-assets.mjs",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lessylphides/pdf-project.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lessylphides/pdf-project/issues"
+  },
+  "homepage": "https://github.com/lessylphides/pdf-project#readme",
+  "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.5.438"
+  },
+  "devDependencies": {
+    "@expo-google-fonts/nanum-gothic": "^0.4.0",
+    "vite": "^7.3.8"
+  },
+  "private": true,
+  "type": "module"
+}

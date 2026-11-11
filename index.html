@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PDF 편집 뷰어</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header class="toolbar">
+      <div class="group">
+        <button id="btn-open" class="primary" title="PDF 열기 (Ctrl+O)">열기</button>
+        <button id="btn-append" title="다른 PDF의 페이지를 현재 페이지 뒤에 추가">PDF 추가</button>
+        <button id="btn-save" class="primary" title="편집한 PDF 저장 (Ctrl+S)" disabled>저장</button>
+      </div>
+      <div class="group">
+        <button id="btn-undo" title="실행 취소 (Ctrl+Z)" disabled>↶</button>
+        <button id="btn-redo" title="다시 실행 (Ctrl+Y)" disabled>↷</button>
+      </div>
+      <div class="group tools" id="tools">
+        <button data-tool="select" title="선택·이동·크기 조절 (V)">선택</button>
+        <button data-tool="text" title="새 텍스트 추가 (T)">텍스트</button>
+        <button data-tool="edittext" title="기존 텍스트를 클릭해 수정 (E)">글자 수정</button>
+        <button data-tool="ink" title="자유 그리기 (P)">펜</button>
+        <button data-tool="highlight" title="형광펜 (H)">형광펜</button>
+        <button data-tool="rect" title="사각형 (R)">사각형</button>
+        <button data-tool="ellipse" title="원 (O)">원</button>
+        <button data-tool="line" title="직선 (L)">선</button>
+        <button data-tool="whiteout" title="영역을 흰색으로 가리기 (W)">지우개</button>
+        <button data-tool="image" title="이미지 삽입 (I)">이미지</button>
+      </div>
+      <div class="group zoom">
+        <button id="btn-zoom-out" title="축소 (Ctrl+-)">−</button>
+        <span id="zoom-label">100%</span>
+        <button id="btn-zoom-in" title="확대 (Ctrl++)">+</button>
+        <button id="btn-fit" title="폭에 맞추기">폭 맞춤</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="page-ops">
+          <span class="page-indicator"><span id="page-num">-</span> / <span id="page-count">-</span></span>
+          <div class="ops">
+            <button id="btn-rot-left" title="왼쪽으로 회전" disabled>⟲</button>
+            <button id="btn-rot-right" title="오른쪽으로 회전" disabled>⟳</button>
+            <button id="btn-move-up" title="페이지를 앞으로" disabled>▲</button>
+            <button id="btn-move-down" title="페이지를 뒤로" disabled>▼</button>
+            <button id="btn-blank" title="현재 페이지 뒤에 빈 페이지 추가" disabled>＋</button>
+            <button id="btn-delete-page" title="현재 페이지 삭제" disabled>🗑</button>
+          </div>
+        </div>
+        <div id="thumbs" class="thumbs"></div>
+      </aside>
+
+      <main id="viewer" class="viewer">
+        <div id="empty" class="empty">
+          <div class="drop">
+            <p class="big">PDF 파일을 여기로 끌어다 놓으세요</p>
+            <p>또는 <button id="btn-open-2" class="primary">PDF 열기</button></p>
+            <p class="muted">파일은 브라우저 안에서만 처리되며 서버로 전송되지 않습니다.</p>
+          </div>
+        </div>
+        <div id="pages" class="pages"></div>
+      </main>
+
+      <aside class="props" id="props">
+        <h3>속성</h3>
+        <p class="muted" id="props-target">도구 기본값</p>
+        <label class="row" data-prop="color">선·글자 색 <input type="color" id="p-color" value="#e11d48" /></label>
+        <label class="row check" data-prop="nostroke"><input type="checkbox" id="p-nostroke" /> 선 없음</label>
+        <label class="row" data-prop="fill">채우기 색 <input type="color" id="p-fill" value="#ffffff" /></label>
+        <label class="row check" data-prop="nofill"><input type="checkbox" id="p-nofill" /> 채우기 없음</label>
+        <label class="row" data-prop="width">선 굵기 <input type="range" id="p-width" min="0.5" max="20" step="0.5" value="2" /><output id="o-width">2</output></label>
+        <label class="row" data-prop="opacity">불투명도 <input type="range" id="p-opacity" min="0.1" max="1" step="0.05" value="1" /><output id="o-opacity">100%</output></label>
+        <label class="row" data-prop="size">글자 크기 <input type="number" id="p-size" min="4" max="200" step="1" value="14" /></label>
+        <label class="row check" data-prop="bold"><input type="checkbox" id="p-bold" /> 굵게</label>
+        <div class="row actions" id="sel-actions" hidden>
+          <button id="btn-dup" title="복제 (Ctrl+D)">복제</button>
+          <button id="btn-front" title="맨 앞으로">맨 앞으로</button>
+          <button id="btn-del" class="danger" title="삭제 (Delete)">삭제</button>
+        </div>
+        <div class="help">
+          <h4>사용법</h4>
+          <ul>
+            <li><b>글자 수정</b>: 문서의 기존 글자를 클릭하면 원래 글자를 가리고 같은 위치에 고쳐 쓸 수 있습니다.</li>
+            <li><b>선택</b>: 개체를 끌어 이동, 오른쪽 아래 핸들로 크기 조절, 텍스트는 더블클릭해 수정합니다.</li>
+            <li><b>Delete</b> 삭제 · <b>Ctrl+D</b> 복제 · 방향키로 미세 이동(Shift: 10배)</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="status" id="status">PDF를 열어 주세요.</footer>
+
+    <input type="file" id="file-open" accept="application/pdf,.pdf" hidden />
+    <input type="file" id="file-append" accept="application/pdf,.pdf" hidden />
+    <input type="file" id="file-image" accept="image/*" hidden />
+    <div id="busy" class="busy" hidden><div class="spinner"></div><span id="busy-text">처리 중…</span></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
