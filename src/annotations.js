@@ -29,10 +29,26 @@ export function bbox(ann) {
       }
       return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
     }
+    case 'markup':
+      return unionRects(ann.quads);
     default:
       return { x: ann.x, y: ann.y, w: ann.w, h: ann.h };
   }
 }
+
+export function unionRects(rects) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const r of rects) {
+    minX = Math.min(minX, r.x);
+    minY = Math.min(minY, r.y);
+    maxX = Math.max(maxX, r.x + r.w);
+    maxY = Math.max(maxY, r.y + r.h);
+  }
+  return rects.length ? { x: minX, y: minY, w: maxX - minX, h: maxY - minY } : { x: 0, y: 0, w: 0, h: 0 };
+}
+
+/** Notes keep a fixed icon size and markups follow the text they mark. */
+export const canResize = (ann) => ann.type !== 'note' && ann.type !== 'markup';
 
 export function translate(ann, dx, dy) {
   switch (ann.type) {
@@ -41,6 +57,9 @@ export function translate(ann, dx, dy) {
       break;
     case 'ink':
       ann.points = ann.points.map(([x, y]) => [x + dx, y + dy]);
+      break;
+    case 'markup':
+      ann.quads = ann.quads.map((q) => ({ ...q, x: q.x + dx, y: q.y + dy }));
       break;
     default:
       ann.x += dx; ann.y += dy;
@@ -52,6 +71,7 @@ export function translate(ann, dx, dy) {
  * so its bounding box's bottom-right corner lands at (px, py).
  */
 export function resizeTo(ann, orig, px, py, keepRatio) {
+  if (!canResize(ann)) return;
   const b = bbox(orig);
   let w = Math.max(px - b.x, 2);
   let h = Math.max(py - b.y, 2);

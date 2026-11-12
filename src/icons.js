@@ -1,0 +1,62 @@
+// Inline line icons (24x24, stroke = currentColor).
+const P = {
+  menu: 'M4 6h16M4 12h16M4 18h16',
+  undo: 'M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11',
+  redo: 'm15 14 5-5-5-5M20 9H9.5a5.5 5.5 0 0 0 0 11H13',
+  search: 'M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13ZM20 20l-4.8-4.8',
+  share: 'M12 3v12M7.5 7.5 12 3l4.5 4.5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7',
+  select: 'M6 3.5 18 12l-5.3 1.2L10 19z',
+  text: 'M5 5h14M12 5v14M9 19h6',
+  edittext: 'M4 7h9M8.5 7v11M4 20h16M14 17l6.2-6.2a1.6 1.6 0 0 0-2.3-2.3L11.7 14.7 11 18z',
+  image: 'M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2ZM9 11.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM21 16l-5-5L5 20',
+  ink: 'M3 17c2.5-4 4.5-6.5 6.5-4s3.5 3 5.5-.5S18 6 21 6',
+  rect: 'M5 6h14a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z',
+  ellipse: 'M12 6c4.4 0 8 2.7 8 6s-3.6 6-8 6-8-2.7-8-6 3.6-6 8-6Z',
+  line: 'M5 19 19 5',
+  whiteout: 'M15.5 4 21 9.5 11 19.5H6.5L3 16zM9 10l5.5 5.5M11 19.5h10',
+  highlight: 'm9 11-5 5v3.5h3.5l5-5M9 11l6.5-6.5 4 4L13 15zM3 21h9',
+  underline: 'M7 4v7a5 5 0 0 0 10 0V4M5 20h14',
+  note: 'M4 5h16v11H10l-5 4v-4H4zM8 9h8M8 12h5',
+  sign: 'M3 17c2.5 0 3.5-8 5.5-8s-.5 8 2.5 8 3-4 5-4 2 2.5 5 2.5M3 21h18',
+  stamp: 'M9.5 3h5v5.5l2.5 4h-10l2.5-4zM4 14h16v4H4zM6 21h12',
+  photo: 'M4 8h3l2-3h6l2 3h3v11H4zM12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z',
+  pages: 'M8 3h11v14H8zM5 7v14h11',
+  rotateRight: 'M20 12a8 8 0 1 1-2.4-5.7M20 4v5h-5',
+  rotateLeft: 'M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5',
+  trash: 'M4 7h16M9.5 7V4h5v3M6 7l1 14h10l1-14M10 11v6M14 11v6',
+  pageAdd: 'M6 3h8.5L19 7.5V21H6zM12.5 10v7M9 13.5h7',
+  fileAdd: 'M14 3H6v18h7M14 3l5 5v4M14 3v5h5M18 15v6M15 18h6',
+  ocr: 'M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M8 9h8M8 12h8M8 15h5',
+  zoomIn: 'M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13ZM20 20l-4.8-4.8M10.5 8v5M8 10.5h5',
+  zoomOut: 'M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13ZM20 20l-4.8-4.8M8 10.5h5',
+  fit: 'M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5',
+  goto: 'M5 12h12M13 7l5 5-5 5',
+  up: 'm6 15 6-6 6 6',
+  down: 'm6 9 6 6 6-6',
+  left: 'm15 6-6 6 6 6',
+  right: 'm9 6 6 6-6 6',
+  close: 'M6 6l12 12M18 6 6 18',
+  copy: 'M9 9h11v11H9zM15 9V4H4v11h5',
+  front: 'M8 8h12v12H8zM4 16V4h12',
+  download: 'M12 4v11M7 10l5 5 5-5M5 20h14',
+  saveAs: 'M5 3h11l4 4v14H5zM8 3v5h7V3M8 21v-6h8v6',
+  open: 'M3 7V5a1 1 0 0 1 1-1h5l2 2h8a1 1 0 0 1 1 1v2M3 7v11a1 1 0 0 0 1 1h14.5l2.5-9H6z',
+  print: 'M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z',
+  info: 'M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18ZM12 11v6M12 7.5v.5',
+  pencil: 'M4 20l1-4L16 5l3 3L8 19zM14 7l3 3',
+  library: 'M4 4h6v16H4zM14 4l6 1.5-3 15-6-1.5z',
+  closeDoc: 'M6 3h9l4 4v14H6zM9.5 12.5l5 5M14.5 12.5l-5 5',
+  edit: 'M4 20l1-4L16 5l3 3L8 19z',
+  plus: 'M12 5v14M5 12h14',
+  check: 'M5 12.5 10 17 19 7',
+  lock: 'M6 11h12v10H6zM8.5 11V7.5a3.5 3.5 0 0 1 7 0V11',
+  pen: 'M15.5 4.5l4 4L9 19l-5 1 1-5z',
+};
+
+export function icon(name, { size = 22, label } = {}) {
+  const span = document.createElement('span');
+  span.className = 'ic';
+  span.setAttribute('aria-hidden', label ? 'false' : 'true');
+  span.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${P[name] || ''}"/></svg>`;
+  return span;
+}

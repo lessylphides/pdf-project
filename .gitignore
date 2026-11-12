@@ -1,4 +1,5 @@
 node_modules/
 dist/
-public/pdfjs/
+public/vendor/
+test-results/
 .DS_Store
