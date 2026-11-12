@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#16181d" media="(prefers-color-scheme: dark)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="PDF 편집" />
+    <meta name="description" content="스마트폰·태블릿에서 PDF를 열고 글자 입력, 서명·도장, 주석을 넣어 저장하는 편집기. 파일은 기기 밖으로 나가지 않습니다." />
+    <meta name="referrer" content="no-referrer" />
+    <title>PDF 편집기</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  </head>
+  <body>
+    <div class="app" id="app">
+      <header class="topbar">
+        <button id="btn-menu" class="icon-btn" aria-label="메뉴" data-icon="menu"></button>
+        <div class="doc-title" id="doc-title">PDF 편집기</div>
+        <button id="btn-undo" class="icon-btn" aria-label="실행 취소" data-icon="undo" disabled></button>
+        <button id="btn-redo" class="icon-btn" aria-label="다시 실행" data-icon="redo" disabled></button>
+        <button id="btn-search" class="icon-btn" aria-label="텍스트 검색" data-icon="search" disabled></button>
+        <button id="btn-share" class="icon-btn accent" aria-label="저장·공유" data-icon="share" disabled></button>
+      </header>
+
+      <div id="searchbar" class="searchbar" hidden>
+        <input id="search-input" type="search" placeholder="문서에서 찾기" enterkeyhint="search" autocomplete="off" aria-label="검색어" />
+        <span id="search-count" class="search-count" aria-live="polite"></span>
+        <button id="search-prev" class="icon-btn" aria-label="이전 결과" data-icon="up"></button>
+        <button id="search-next" class="icon-btn" aria-label="다음 결과" data-icon="down"></button>
+        <button id="search-close" class="icon-btn" aria-label="검색 닫기" data-icon="close"></button>
+      </div>
+
+      <div class="main">
+        <aside id="pages-panel" class="pages-panel" aria-label="페이지 목록">
+          <div class="panel-head">
+            <h2>페이지</h2>
+            <span class="muted small" id="panel-hint">길게 눌러 끌면 순서가 바뀝니다</span>
+            <button id="panel-close" class="icon-btn" aria-label="페이지 목록 닫기" data-icon="close"></button>
+          </div>
+          <div class="panel-actions" id="panel-actions"></div>
+          <div id="thumbs" class="thumbs"></div>
+        </aside>
+        <div id="panel-backdrop" class="panel-backdrop"></div>
+
+        <main id="viewer" class="viewer" data-tool="select" data-tool-kind="select">
+          <div id="empty" class="empty">
+            <div class="empty-card">
+              <div class="empty-logo" aria-hidden="true"><img src="./icons/icon.svg" alt="" width="64" height="64" /></div>
+              <h1>PDF 편집기</h1>
+              <p class="muted">글자 입력 · 서명과 도장 · 형광펜과 메모</p>
+              <button id="btn-open-2" class="btn primary big">PDF 열기</button>
+              <p class="muted small drop-hint">또는 PDF 파일을 이 화면에 끌어다 놓으세요</p>
+              <div id="restore-card" class="restore-card" hidden></div>
+              <p class="privacy small"><span data-icon="lock" data-icon-size="16"></span> 파일은 이 기기 안에서만 처리되며 어디에도 전송되지 않습니다.</p>
+            </div>
+          </div>
+          <div id="pages" class="pages"></div>
+        </main>
+        <button id="page-pill" class="page-pill" hidden aria-label="페이지 이동"></button>
+      </div>
+
+      <div id="optbar" class="optbar" hidden></div>
+      <nav id="toolbar" class="toolbar" aria-label="도구"></nav>
+      <nav class="tabbar" id="tabbar" aria-label="도구 분류">
+        <button data-tab="view" class="active">보기</button>
+        <button data-tab="edit">편집</button>
+        <button data-tab="sign">서명</button>
+        <button data-tab="comment">주석</button>
+        <button data-tab="page">페이지</button>
+      </nav>
+    </div>
+
+    <div id="modal-root"></div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="busy" class="busy" hidden>
+      <div class="busy-card">
+        <div class="spinner"></div>
+        <span id="busy-text">처리 중…</span>
+        <button id="busy-cancel" class="btn small" hidden>중지</button>
+      </div>
+    </div>
+
+    <input type="file" id="file-open" accept="application/pdf,.pdf" hidden />
+    <input type="file" id="file-append" accept="application/pdf,.pdf" hidden />
+    <input type="file" id="file-image" accept="image/*" hidden />
+    <input type="file" id="file-photo" accept="image/*" hidden />
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
