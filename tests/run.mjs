@@ -355,8 +355,48 @@ try {
   check(/INVOICE/i.test(ocrText) && /12345/.test(ocrText), `저장 PDF에 숨은 글자 층: "${ocrText.slice(0, 60)}"`);
 
   // -------------------------------------------------------------------------
+  step('한글(HWP) 문서 열기');
+  // (Playwright does not deliver files from non-ASCII paths; pass the bytes with the Korean name.)
+  await page.setInputFiles('#file-open', { name: '신청서.hwp', mimeType: '', buffer: readFileSync(fx.hwp) });
+  await page.waitForSelector('.sheet-wrap.open h2:has-text("한글 문서를 PDF로 변환했습니다")', { timeout: 60_000 });
+  await shot('10-phone-hwp-notice');
+  await sheetButton('확인').click();
+  await page.waitForSelector('.page-canvas');
+  check(await page.locator('#doc-title').textContent() === '신청서.pdf', '파일 이름: 신청서.pdf');
+  await page.locator('#btn-search').click();
+  await page.locator('#search-input').fill('변환 테스트');
+  check(await until(() => document.getElementById('search-count').textContent === '1 / 1'), '변환된 문서에서 글자 검색');
+  await page.locator('#search-input').fill('홍길동');
+  check(await until(() => document.getElementById('search-count').textContent === '1 / 1'), '표 안의 글자도 검색');
+  await page.locator('#search-close').click();
+  await shot('11-phone-hwp');
+  await button('편집').click();
+  await page.locator('[data-tool="text"]').click();
+  await tap(await pagePoint(0, 300, 300));
+  await page.waitForSelector('.text-editor');
+  await page.keyboard.type('추가한 글자');
+  await page.keyboard.press('Escape');
+  const hwpPdf = await saveViaMenu();
+  const hwpText = (await pdfText(hwpPdf))[0].text.replace(/\s+/g, '');
+  check(hwpText.includes('한글문서변환테스트') && hwpText.includes('홍길동') && hwpText.includes('추가한글자'), '저장 PDF에 원문·표·추가한 글자가 모두 실제 텍스트로 들어감');
+
+  if (process.env.HWP_SAMPLE) {
+    step('실제 한글 문서 (HWP_SAMPLE)');
+    const t0 = Date.now();
+    await page.setInputFiles('#file-open', process.env.HWP_SAMPLE);
+    await page.waitForSelector('.sheet-wrap.open h2:has-text("한글 문서를 PDF로 변환했습니다")', { timeout: 180_000 });
+    await sheetButton('확인').click();
+    await page.waitForSelector('.page-canvas');
+    const n = (await app()).pages.length;
+    check(n > 0, `${n}쪽으로 변환 (${((Date.now() - t0) / 1000).toFixed(1)}초)`);
+    await shot('12-phone-hwp-sample');
+    const samplePdf = await saveViaMenu();
+    check((await PDFDocument.load(samplePdf)).getPageCount() === n, '저장 파일도 같은 쪽 수');
+  }
+
+  // -------------------------------------------------------------------------
   step('iPad 화면');
-  for (const [name, device] of [['10-ipad-portrait', devices['iPad Pro 11']], ['11-ipad-landscape', devices['iPad Pro 11 landscape']]]) {
+  for (const [name, device] of [['20-ipad-portrait', devices['iPad Pro 11']], ['21-ipad-landscape', devices['iPad Pro 11 landscape']]]) {
     const c2 = await browser.newContext({ ...device });
     const p = await c2.newPage();
     p.on('pageerror', (e) => errors.push(e.message));
