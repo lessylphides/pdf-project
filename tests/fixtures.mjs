@@ -132,5 +132,8 @@ export async function buildFixtures(dir, browser) {
     paths[k] = join(dir, `${k}.pdf`);
     writeFileSync(paths[k], v);
   }
+  const { makeHwp } = await import('./hwp-fixture.mjs');
+  paths.hwp = join(dir, '신청서.hwp');
+  writeFileSync(paths.hwp, makeHwp());
   return paths;
 }

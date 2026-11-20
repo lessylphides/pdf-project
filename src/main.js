@@ -163,9 +163,31 @@ const isDirty = () => history.index !== history.saved || state.formDirty;
 // Opening files
 // ---------------------------------------------------------------------------
 
-/** Reads a file, removing its password if it has one. Returns decrypted bytes or null if cancelled. */
+const HWP_STAGES = { parse: '한글 문서를 읽는 중…', fonts: '글꼴을 준비하는 중…', layout: '쪽을 배치하는 중…' };
+
+/** Converts a .hwp file to PDF on this device. */
+async function convertHwpFile(file, bytes) {
+  return withBusy('한글 문서를 읽는 중…', async () => {
+    const { convertHwp } = await import('./hwp/browser.js');
+    return convertHwp(bytes, (stage, done, total) => {
+      setBusyText(stage === 'render' ? `PDF로 변환하는 중… ${done}/${total}쪽` : HWP_STAGES[stage] || '변환하는 중…');
+    });
+  });
+}
+
+const isHwpName = (name) => /\.hwp$/i.test(name || '');
+const hwpSignature = (b) => b[0] === 0xd0 && b[1] === 0xcf && b[2] === 0x11 && b[3] === 0xe0 && new TextDecoder('latin1').decode(b.subarray(0, Math.min(b.length, 65536))).includes('HWP Document File');
+
+/**
+ * Reads a PDF (removing its password if it has one) or converts an HWP file.
+ * Returns { bytes, name, ... } or null if cancelled.
+ */
 async function readPdfFile(file) {
   let bytes = new Uint8Array(await file.arrayBuffer());
+  if (isHwpName(file.name) || hwpSignature(bytes)) {
+    const out = await convertHwpFile(file, bytes);
+    return { bytes: out.pdf, encrypted: false, converted: true, warnings: out.warnings, name: (file.name || '문서.hwp').replace(/\.hwp$/i, '') + '.pdf' };
+  }
   if (!looksEncrypted(bytes)) return { bytes, encrypted: false };
   // Files that only restrict printing/editing open with an empty password.
   const open = await decrypt(bytes, '');
@@ -275,13 +297,14 @@ async function openFile(file) {
     if (!read) return;
     await withBusy('PDF를 여는 중…', async () => {
       resetDocument();
-      state.fileName = file.name || 'document.pdf';
+      state.fileName = read.name || file.name || 'document.pdf';
       state.sensitive = !!read.hadPassword;
       state.pages = await loadSource(read.bytes, state.fileName);
       resetHistory();
       afterOpen();
     });
-    if (read.hadPassword) toast('비밀번호를 해제했습니다. 보안을 위해 이 문서는 자동 저장하지 않습니다.', { duration: 5000 });
+    if (read.converted) hwpNotice(read);
+    else if (read.hadPassword) toast('비밀번호를 해제했습니다. 보안을 위해 이 문서는 자동 저장하지 않습니다.', { duration: 5000 });
     else if (read.encrypted) toast('편집 제한이 걸린 PDF를 열었습니다. 저장하면 제한이 풀린 파일이 됩니다.', { duration: 5000 });
     if (state.sensitive) await store.clearSession().catch(() => {});
     else {
@@ -291,6 +314,16 @@ async function openFile(file) {
   } catch (err) {
     showError('PDF를 열지 못했습니다', err);
   }
+}
+
+function hwpNotice(read) {
+  const extra = read.warnings.length ? `\n\n${read.warnings.map((w) => `• ${w}`).join('\n')}` : '';
+  showSheet({
+    title: '한글 문서를 PDF로 변환했습니다',
+    content: h('p', { class: 'dialog-text' },
+      `한글 프로그램 없이 이 기기에서 변환했습니다. 원본 글꼴 대신 나눔명조·나눔고딕을 사용해서 글자 모양과 줄 안의 간격이 원본과 조금 다를 수 있습니다. 쪽 나눔과 줄 위치는 원본을 따릅니다.${extra}\n\n이제 PDF처럼 글자 입력, 서명·도장, 주석을 넣고 PDF로 저장할 수 있습니다.`),
+    actions: [{ label: '확인', primary: true }],
+  });
 }
 
 function afterOpen() {
@@ -310,7 +343,7 @@ async function appendFile(file) {
     const read = await readPdfFile(file);
     if (!read) return;
     await withBusy('페이지를 추가하는 중…', async () => {
-      const pages = await loadSource(read.bytes, file.name);
+      const pages = await loadSource(read.bytes, read.name || file.name);
       const at = state.current + 1;
       state.pages.splice(at, 0, ...pages);
       if (read.hadPassword) state.sensitive = true;
@@ -319,6 +352,7 @@ async function appendFile(file) {
       scrollToPage(at);
       toast(`${file.name}의 ${pages.length}쪽을 추가했습니다.`);
     });
+    if (read.converted && read.warnings.length) hwpNotice(read);
     if (state.sensitive) store.clearSession().catch(() => {});
     else store.saveSources(state.sources).catch((err) => console.warn('autosave', err));
   } catch (err) {
@@ -2107,8 +2141,8 @@ async function openMenu() {
     icon(ic), h('span', { class: 'menu-text' }, h('strong', {}, title), sub ? h('span', { class: 'muted small' }, sub) : null),
     toggle != null ? h('span', { class: `switch ${toggle ? 'on' : ''}`, 'aria-hidden': 'true' }) : null);
   const list = h('div', { class: 'menu-list' },
-    item('open', 'PDF 열기', 'open'),
-    item('fileAdd', '다른 PDF의 페이지 추가', 'append', { disabled: !has }),
+    item('open', '문서 열기', 'open', { sub: 'PDF 또는 한글(HWP) 문서' }),
+    item('fileAdd', '다른 문서의 페이지 추가', 'append', { disabled: !has, sub: 'PDF 또는 한글(HWP) 문서' }),
     item('share', '저장 · 공유', 'save', { disabled: !has }),
     item('ocr', '문자 인식 (OCR) – 이 페이지', 'ocr', { disabled: !has, sub: '스캔·사진 PDF의 글자를 검색 가능하게' }),
     item('ocr', '문자 인식 (OCR) – 모든 페이지', 'ocr-all', { disabled: !has }),
@@ -2139,7 +2173,7 @@ function showAbout() {
   showSheet({
     title: '이 앱에 대하여',
     content: h('div', { class: 'about' },
-      h('p', {}, 'PDF를 열어 글자 입력·수정, 서명과 도장, 형광펜·밑줄·메모, 페이지 정리를 하고 새 PDF로 저장합니다.'),
+      h('p', {}, 'PDF와 한글(HWP) 문서를 열어 글자 입력·수정, 서명과 도장, 형광펜·밑줄·메모, 페이지 정리를 하고 새 PDF로 저장합니다.'),
       h('h3', {}, '개인정보'),
       h('p', {}, '파일은 이 기기의 브라우저 안에서만 처리되며 서버로 전송되지 않습니다. 자동 저장된 작업과 서명·도장 보관함도 이 기기에만 저장됩니다. 비밀번호로 열었던 문서는 자동 저장하지 않습니다.'),
       h('h3', {}, '알아 둘 점'),
@@ -2150,8 +2184,10 @@ function showAbout() {
         h('li', {}, '다른 PDF에서 추가한 페이지의 입력 칸은 입력할 수 없습니다(보이기만 합니다).'),
         h('li', {}, '전자서명(인증서)이 들어 있던 PDF는 편집하면 그 인증이 더 이상 유효하지 않습니다.'),
         h('li', {}, '비밀번호로 열었던 PDF를 저장하면 비밀번호가 없는 파일이 됩니다.'),
+        h('li', {}, '한글(HWP) 문서는 이 기기에서 PDF로 변환해 엽니다. 원본 글꼴 대신 나눔명조·나눔고딕을 쓰므로 글자 모양과 줄 안 간격이 조금 다를 수 있습니다. 결과는 PDF로 저장되며, 한글 파일로 다시 저장하는 기능은 없습니다. 개방형 문서(HWPX)와 암호·배포용 문서는 열 수 없습니다.'),
       ),
       h('p', { class: 'muted small' }, 'PDF.js · pdf-lib · qpdf · Tesseract.js · 나눔고딕/나눔명조(SIL OFL)를 사용합니다.'),
+      h('p', { class: 'muted small' }, '본 제품은 한글과컴퓨터의 한/글 문서 파일(.hwp) 공개 문서를 참고하여 개발하였습니다.'),
     ),
     actions: [{ label: '닫기', primary: true }],
   });
@@ -2486,7 +2522,7 @@ function wire() {
     e.preventDefault();
     app.classList.remove('dragover');
     const files = [...e.dataTransfer.files];
-    const file = files.find((f) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name));
+    const file = files.find((f) => f.type === 'application/pdf' || /\.(pdf|hwp)$/i.test(f.name));
     const img = files.find((f) => f.type.startsWith('image/'));
     if (file) {
       if (state.pages.length) {

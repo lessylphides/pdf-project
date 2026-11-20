@@ -54,8 +54,9 @@
               <div class="empty-logo" aria-hidden="true"><img src="./icons/icon.svg" alt="" width="64" height="64" /></div>
               <h1>PDF 편집기</h1>
               <p class="muted">글자 입력 · 서명과 도장 · 형광펜과 메모</p>
-              <button id="btn-open-2" class="btn primary big">PDF 열기</button>
-              <p class="muted small drop-hint">또는 PDF 파일을 이 화면에 끌어다 놓으세요</p>
+              <p class="muted small">PDF와 한글(HWP) 문서를 열 수 있습니다</p>
+              <button id="btn-open-2" class="btn primary big">문서 열기</button>
+              <p class="muted small drop-hint">또는 PDF·HWP 파일을 이 화면에 끌어다 놓으세요</p>
               <div id="restore-card" class="restore-card" hidden></div>
               <p class="privacy small"><span data-icon="lock" data-icon-size="16"></span> 파일은 이 기기 안에서만 처리되며 어디에도 전송되지 않습니다.</p>
             </div>
@@ -86,8 +87,8 @@
       </div>
     </div>
 
-    <input type="file" id="file-open" accept="application/pdf,.pdf" hidden />
-    <input type="file" id="file-append" accept="application/pdf,.pdf" hidden />
+    <input type="file" id="file-open" accept="application/pdf,.pdf,.hwp,application/x-hwp,application/haansofthwp,application/vnd.hancom.hwp" hidden />
+    <input type="file" id="file-append" accept="application/pdf,.pdf,.hwp,application/x-hwp,application/haansofthwp,application/vnd.hancom.hwp" hidden />
     <input type="file" id="file-image" accept="image/*" hidden />
     <input type="file" id="file-photo" accept="image/*" hidden />
 

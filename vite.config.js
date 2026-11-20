@@ -37,8 +37,8 @@ function serviceWorker() {
     },
     closeBundle() {
       const files = walk(outDir).map((f) => relative(outDir, f).split('\\').join('/'));
-      // Large or rarely used files (OCR, seal font, CJK maps) are cached when first used.
-      const shell = files.filter((f) => !f.startsWith('vendor/') && !f.endsWith('.map') && f !== 'sw.js' && !/Myeongjo/.test(f));
+      // Large or rarely used files (OCR, HWP/seal fonts, CJK maps) are cached when first used.
+      const shell = files.filter((f) => !f.startsWith('vendor/') && !f.endsWith('.map') && f !== 'sw.js' && !/Myeongjo|ExtraBold/.test(f));
       const hash = createHash('sha256');
       for (const f of shell) hash.update(f).update(String(statSync(join(outDir, f)).size));
       const version = hash.digest('hex').slice(0, 12);
