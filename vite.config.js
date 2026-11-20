@@ -49,11 +49,34 @@ self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', (e) => {
-  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k.startsWith('pdf-editor-') && k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k.startsWith('pdf-editor-') && k !== CACHE && k !== SHARED).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
 });
+// Files shared to the app (Android share sheet) arrive as a POST to
+// ./share-target. They are kept in a cache on this device for the page to
+// pick up, and never sent anywhere.
+const SHARED = 'pdf-editor-shared';
+async function receiveShare(req) {
+  try {
+    const form = await req.formData();
+    const files = form.getAll('file').filter((f) => f && typeof f === 'object' && f.size > 0);
+    const cache = await caches.open(SHARED);
+    for (const k of await cache.keys()) await cache.delete(k);
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      await cache.put(new Request('./__shared/' + i), new Response(f, { headers: { 'X-File-Name': encodeURIComponent(f.name || 'document'), 'Content-Type': f.type || 'application/octet-stream' } }));
+    }
+    return Response.redirect(new URL('./?shared=' + files.length, self.registration.scope).href, 303);
+  } catch (err) {
+    return Response.redirect(new URL('./?shared=error', self.registration.scope).href, 303);
+  }
+}
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   const url = new URL(req.url);
+  if (req.method === 'POST' && url.origin === location.origin && url.pathname.endsWith('/share-target')) {
+    e.respondWith(receiveShare(req));
+    return;
+  }
   if (req.method !== 'GET' || url.origin !== location.origin) return;
   if (req.mode === 'navigate') {
     // Network first so updates arrive; the cached page works offline.

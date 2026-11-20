@@ -1,7 +1,8 @@
 {
+  "id": "./",
   "name": "PDF 편집기",
   "short_name": "PDF 편집",
-  "description": "PDF에 글자 입력, 서명·도장, 주석을 넣어 저장합니다. 파일은 기기 밖으로 나가지 않습니다.",
+  "description": "PDF·한글(HWP) 문서에 글자 입력, 서명·도장, 주석을 넣어 저장합니다. 파일은 기기 밖으로 나가지 않습니다.",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",
@@ -14,7 +15,29 @@
     { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
   ],
+  "share_target": {
+    "action": "./share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "files": [
+        {
+          "name": "file",
+          "accept": ["application/pdf", ".pdf", ".hwp", "application/x-hwp", "application/haansofthwp", "application/vnd.hancom.hwp", "application/octet-stream"]
+        }
+      ]
+    }
+  },
   "file_handlers": [
-    { "action": "./", "accept": { "application/pdf": [".pdf"] } }
-  ]
+    {
+      "action": "./",
+      "accept": {
+        "application/pdf": [".pdf"],
+        "application/x-hwp": [".hwp"]
+      }
+    }
+  ],
+  "launch_handler": { "client_mode": "focus-existing" }
 }
