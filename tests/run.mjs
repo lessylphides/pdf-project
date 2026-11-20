@@ -395,6 +395,33 @@ try {
   }
 
   // -------------------------------------------------------------------------
+  step('공유받은 파일 열기 (Android 공유 메뉴)');
+  {
+    const c3 = await browser.newContext({ ...devices['Pixel 7'] });
+    const p3 = await c3.newPage();
+    p3.on('pageerror', (e) => errors.push(e.message));
+    await p3.goto(url);
+    await p3.evaluate(() => navigator.serviceWorker.ready);
+    await p3.reload();
+    await p3.waitForFunction(() => !!navigator.serviceWorker.controller);
+    // What Chrome does when the app is chosen in the share sheet: a multipart POST to the share target.
+    const status = await p3.evaluate(async (bytes) => {
+      const fd = new FormData();
+      fd.append('file', new File([new Uint8Array(bytes)], '공유받은 신청서.hwp'));
+      const res = await fetch('./share-target', { method: 'POST', body: fd, redirect: 'manual' });
+      return res.type;
+    }, [...readFileSync(fx.hwp)]);
+    check(status === 'opaqueredirect', '서비스 워커가 공유 파일을 받아 앱으로 넘김');
+    await p3.goto(`${url}?shared=1`);
+    await p3.waitForSelector('.sheet-wrap.open h2:has-text("한글 문서를 PDF로 변환했습니다")', { timeout: 60_000 });
+    check(await p3.locator('#doc-title').textContent() === '공유받은 신청서.pdf', '공유받은 한글 문서가 바로 열림');
+    check(!p3.url().includes('shared'), '주소에서 공유 표시 제거');
+    const left = await p3.evaluate(async () => (await (await caches.open('pdf-editor-shared')).keys()).length);
+    check(left === 0, '공유받은 파일 사본은 남기지 않음');
+    await c3.close();
+  }
+
+  // -------------------------------------------------------------------------
   step('iPad 화면');
   for (const [name, device] of [['20-ipad-portrait', devices['iPad Pro 11']], ['21-ipad-landscape', devices['iPad Pro 11 landscape']]]) {
     const c2 = await browser.newContext({ ...device });

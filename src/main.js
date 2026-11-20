@@ -2575,6 +2575,58 @@ function wire() {
   setupGestures();
 }
 
+// ---------------------------------------------------------------------------
+// Files sent to the app from outside: Android share sheet (share target) and
+// "open with" on computers (file handling). iOS offers neither to web apps.
+// ---------------------------------------------------------------------------
+
+const isDocument = (f) => f && (/\.(pdf|hwp)$/i.test(f.name) || f.type === 'application/pdf');
+
+async function openIncoming(files) {
+  const docs = files.filter(isDocument);
+  if (!docs.length) {
+    if (files.length) alertDialog('PDF 또는 한글(HWP) 파일만 열 수 있습니다.', '열 수 없는 파일');
+    return;
+  }
+  await openFile(docs[0]);
+  // More than one: the rest are added after the first document.
+  for (const f of docs.slice(1)) if (state.pages.length) await appendFile(f);
+}
+
+async function receiveSharedFiles() {
+  const params = new URLSearchParams(location.search);
+  if (!params.has('shared')) return;
+  params.delete('shared');
+  window.history.replaceState(null, "", location.pathname + (params.toString() ? `?${params}` : "") + location.hash);
+  const files = [];
+  try {
+    const cache = await caches.open('pdf-editor-shared');
+    for (const req of await cache.keys()) {
+      const res = await cache.match(req);
+      if (res) {
+        const name = decodeURIComponent(res.headers.get('X-File-Name') || 'document');
+        files.push(new File([await res.blob()], name, { type: res.headers.get('Content-Type') || '' }));
+      }
+      await cache.delete(req); // the shared copy is not kept
+    }
+  } catch (err) {
+    console.warn('shared files', err);
+  }
+  if (!files.length) return toast('공유된 파일을 받지 못했습니다. 앱에서 "문서 열기"로 열어 주세요.', { duration: 5000 });
+  await openIncoming(files);
+}
+
+if ('launchQueue' in window) {
+  window.launchQueue.setConsumer(async (params) => {
+    if (!params.files?.length) return;
+    const files = [];
+    for (const handle of params.files) {
+      try { files.push(await handle.getFile()); } catch (err) { console.warn(err); }
+    }
+    await openIncoming(files);
+  });
+}
+
 wire();
 renderPanelActions();
 setTab('view');
@@ -2582,6 +2634,7 @@ updateButtons();
 loadEditorFonts().catch((err) => console.warn('Editor font failed to load', err));
 loadLibrary();
 showRestoreCard();
+receiveSharedFiles();
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   navigator.serviceWorker.register('./sw.js').catch((err) => console.warn('service worker', err));
